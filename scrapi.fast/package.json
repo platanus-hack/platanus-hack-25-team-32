@@ -11,6 +11,7 @@
     "db:seed": "bun src/db/seed.ts"
   },
   "dependencies": {
+    "@ai-sdk/groq": "^2.0.31",
     "@ai-sdk/openai": "^2.0.71",
     "@browserbasehq/sdk": "^2.6.0",
     "@clerk/nextjs": "^6.35.4",

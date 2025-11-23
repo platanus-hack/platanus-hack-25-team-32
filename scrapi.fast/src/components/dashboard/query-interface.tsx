@@ -89,8 +89,6 @@ interface WorkflowMetadata {
   error?: string;
 }
 
-const PROJECT_ID = "default-project";
-
 export function QueryInterface() {
   const [url, setUrl] = useState("");
   const [query, setQuery] = useState("");
@@ -121,7 +119,6 @@ export function QueryInterface() {
         body: JSON.stringify({
           url: url.trim(),
           prompt: query.trim(),
-          projectId: PROJECT_ID,
         }),
       });
 

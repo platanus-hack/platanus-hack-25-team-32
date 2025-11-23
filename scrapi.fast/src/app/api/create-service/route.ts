@@ -1,23 +1,48 @@
-import { generateObject } from "ai";
-import { openai } from "@ai-sdk/openai";
-import { z } from "zod";
-import { db, Service } from "@/db";
-import { nanoid } from "nanoid";
+import { auth } from "@clerk/nextjs/server";
+import { groq } from "@ai-sdk/groq";
 import { tasks } from "@trigger.dev/sdk/v3";
+import { generateObject } from "ai";
+import { eq } from "drizzle-orm";
+import { nanoid } from "nanoid";
+import { z } from "zod";
+import { db, Project, Service } from "@/db";
 import type { getScriptTask } from "@/trigger/get-script.task";
 
 export async function POST(request: Request) {
-  const { url, prompt, projectId } = await request.json();
+  const { userId } = await auth();
+  if (!userId) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
-  if (!url || !prompt || !projectId) {
+  const { url, prompt } = await request.json();
+
+  if (!url || !prompt) {
     return Response.json(
-      { error: "Missing required fields: url, prompt, projectId" },
+      { error: "Missing required fields: url, prompt" },
       { status: 400 },
     );
   }
 
+  let [project] = await db
+    .select()
+    .from(Project)
+    .where(eq(Project.user_id, userId))
+    .limit(1);
+
+  if (!project) {
+    const projectId = nanoid();
+    [project] = await db
+      .insert(Project)
+      .values({
+        id: projectId,
+        user_id: userId,
+        name: "My Project",
+      })
+      .returning();
+  }
+
   const { object } = await generateObject({
-    model: openai("gpt-4o"),
+    model: groq("openai/gpt-oss-120b"),
     schema: z.object({
       name: z.string().describe("A short name for this scraping service"),
       description: z
@@ -59,22 +84,18 @@ Make sure the schemas are valid Zod syntax that can be evaluated with new Functi
 
   await db.insert(Service).values({
     id: serviceId,
-    project_id: projectId,
+    project_id: project.id,
     name: object.name,
     description: object.description,
     url,
-    script: "",
+    user_prompt: prompt,
     schema_input: object.inputSchemaString,
     schema_output: object.outputSchemaString,
     example_input: object.testArgsString,
   });
 
   const handle = await tasks.trigger<typeof getScriptTask>("get-script", {
-    url,
-    userPrompt: prompt,
-    inputSchemaString: object.inputSchemaString,
-    outputSchemaString: object.outputSchemaString,
-    testArgsString: object.testArgsString,
+    serviceId,
   });
 
   return Response.json({

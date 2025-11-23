@@ -225,19 +225,93 @@ export function ScrapiLogsPanel({
 			{/* Content */}
 			<div className="flex-1 overflow-auto p-3">
 				{!chatId ? (
-					<div className="flex items-center justify-center h-full">
-						<div className="flex flex-col items-center gap-2">
-							<Loader size={20} />
-							<div className="text-center">
-								<p className="text-sm font-medium text-muted-foreground">
-									Waiting for chat ID...
-								</p>
-								<p className="text-xs text-muted-foreground mt-1">
-									The chat will be created during trigger execution
-								</p>
-							</div>
-						</div>
-					</div>
+					<Conversation>
+						<ConversationContent>
+							{/* Show progress messages while waiting for chat ID */}
+							{stage === "extracting" && (
+								<Message from="assistant">
+									<MessageContent>
+										<div className="flex items-center gap-2 text-muted-foreground">
+											<Loader size={14} />
+											<span className="text-sm">
+												Analyzing prompt and extracting entities...
+											</span>
+										</div>
+									</MessageContent>
+								</Message>
+							)}
+							{(stage === "scraping" || stage === "generating") && (
+								<>
+									<Message from="assistant">
+										<MessageContent>
+											<div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+												<svg
+													className="w-4 h-4"
+													fill="currentColor"
+													viewBox="0 0 20 20"
+												>
+													<path
+														fillRule="evenodd"
+														d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+														clipRule="evenodd"
+													/>
+												</svg>
+												<span className="text-sm">
+													Entities extracted successfully
+												</span>
+											</div>
+										</MessageContent>
+									</Message>
+									{stage === "scraping" && (
+										<Message from="assistant">
+											<MessageContent>
+												<div className="flex items-center gap-2 text-muted-foreground">
+													<Loader size={14} />
+													<span className="text-sm">
+														Scraping webpage for data patterns...
+													</span>
+												</div>
+											</MessageContent>
+										</Message>
+									)}
+									{stage === "generating" && (
+										<>
+											<Message from="assistant">
+												<MessageContent>
+													<div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+														<svg
+															className="w-4 h-4"
+															fill="currentColor"
+															viewBox="0 0 20 20"
+														>
+															<path
+																fillRule="evenodd"
+																d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+																clipRule="evenodd"
+															/>
+														</svg>
+														<span className="text-sm">
+															Webpage scraped successfully
+														</span>
+													</div>
+												</MessageContent>
+											</Message>
+											<Message from="assistant">
+												<MessageContent>
+													<div className="flex items-center gap-2 text-muted-foreground">
+														<Loader size={14} />
+														<span className="text-sm">
+															Generating extraction code with AI...
+														</span>
+													</div>
+												</MessageContent>
+											</Message>
+										</>
+									)}
+								</>
+							)}
+						</ConversationContent>
+					</Conversation>
 				) : isLoading && messages.length === 0 ? (
 					<div className="flex items-center justify-center h-full">
 						<div className="flex flex-col items-center gap-2">

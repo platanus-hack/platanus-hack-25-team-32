@@ -106,6 +106,8 @@ export const scrapePageLogs = schemaTask({
         reqUrl.startsWith("https://www.gstatic.com") ||
         reqUrl.startsWith("https://y.clarity.ms") ||
         reqUrl.includes("_next/static/") ||
+        reqUrl.includes("_nuxt/") ||
+        reqUrl.includes("_i18n/") ||
         reqUrl.includes(".sentry.io") ||
         reqUrl.endsWith(".ico") ||
         reqUrl.endsWith(".svg")
@@ -291,6 +293,13 @@ export async function getData(input) {
 
 CRITICAL: ONLY modify scripts/get-data.js - do NOT create or modify any other files.
 
+FORBIDDEN - DO NOT DO ANY OF THESE:
+- Do NOT import or require any external libraries (only use built-in fetch)
+- Do NOT use fs, path, or any file system operations
+- Do NOT try to read the log files programmatically in get-data.js
+- Do NOT use cheerio, puppeteer, axios, or any npm packages
+- The logs/ folder is for YOUR analysis only - extract URLs and patterns from them, then use fetch() to get live data
+
 IMPORTANT: Write pure JavaScript, NOT TypeScript. Do not use any type annotations, generics, or TypeScript syntax.
 
 MANDATORY DEBUGGING: You MUST add console.log statements throughout getData() for debugging:
@@ -474,7 +483,7 @@ ONLY modify scripts/get-data.js. Do NOT create, modify, or touch any other files
     logger.info("Test args string", { testArgsString });
     logger.info("Script preview", { script: finalScript.substring(0, 500) });
 
-    const MAX_RETRIES = 5;
+    const MAX_RETRIES = 10;
 
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       logger.info(`Calling run-test API attempt ${attempt + 1}`);

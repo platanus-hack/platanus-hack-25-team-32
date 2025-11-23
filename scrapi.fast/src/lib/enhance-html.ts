@@ -3,6 +3,10 @@ export function enhanceHTMLReadability(
 ): string | Record<string, unknown> | undefined {
   if (typeof htmlString !== "string") return htmlString;
 
+  if (htmlString.length > 100000) {
+    return htmlString;
+  }
+
   const maxLineLength = 120;
   let html = htmlString;
   html = html.replace(/></g, ">\n<");
@@ -160,15 +164,48 @@ function splitLongLines(text: string, maxLength: number): string {
       const content = line.slice(indent.length);
       const chunks: string[] = [];
       let current = "";
+      let inQuotes = false;
+      let quoteChar = "";
 
-      const splitPoints = [",", ";", "&&", "||", " ", ":", "{", "}", "(", ")"];
+      const splitPointsOutsideQuotes = [
+        ",",
+        ";",
+        "&&",
+        "||",
+        " ",
+        ":",
+        "{",
+        "}",
+        "(",
+        ")",
+      ];
+      const splitPointsInsideQuotes = [",", ";", "&&", "||"];
 
       let i = 0;
       while (i < content.length) {
-        current += content[i];
+        const char = content[i];
+
+        if (
+          (char === '"' || char === "'") &&
+          (i === 0 || content[i - 1] !== "\\")
+        ) {
+          if (!inQuotes) {
+            inQuotes = true;
+            quoteChar = char;
+          } else if (char === quoteChar) {
+            inQuotes = false;
+            quoteChar = "";
+          }
+        }
+
+        current += char;
 
         if (current.length >= maxLength - indent.length) {
           let splitAt = -1;
+          const splitPoints = inQuotes
+            ? splitPointsInsideQuotes
+            : splitPointsOutsideQuotes;
+
           for (const point of splitPoints) {
             const lastIdx = current.lastIndexOf(point);
             if (lastIdx > maxLength / 3) {

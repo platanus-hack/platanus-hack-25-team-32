@@ -241,16 +241,51 @@
   min-height: 1em;
 }
 
+/* Override Shiki inline styles for better light mode visibility */
+.shiki span[style*="color:#"] {
+  color: var(--shiki-foreground) !important;
+}
+
+/* Specific token type overrides - Light Mode */
+.shiki span[style*="#6A737D"],
+.shiki span[style*="#586069"] {
+  color: var(--shiki-token-comment) !important;
+}
+
+.shiki span[style*="#D73A49"],
+.shiki span[style*="#CF222E"] {
+  color: var(--shiki-token-keyword) !important;
+}
+
+.shiki span[style*="#032F62"],
+.shiki span[style*="#0A3069"] {
+  color: var(--shiki-token-string) !important;
+}
+
+.shiki span[style*="#005CC5"],
+.shiki span[style*="#0550AE"] {
+  color: var(--shiki-token-constant) !important;
+}
+
+.shiki span[style*="#6F42C1"],
+.shiki span[style*="#8250DF"] {
+  color: var(--shiki-token-function) !important;
+}
+
+.shiki span[style*="#E36209"],
+.shiki span[style*="#953800"] {
+  color: var(--shiki-token-parameter) !important;
+}
+
+/* Dark mode - let Shiki handle its own colors */
 @media (prefers-color-scheme: dark) {
-  .shiki,
-  .shiki span {
-    color: var(--shiki-dark, var(--shiki-foreground)) !important;
-    background-color: var(--shiki-dark-bg, var(--shiki-background)) !important;
+  .shiki span[style*="color:#"] {
+    color: inherit !important;
   }
 }
 
-.dark .shiki span {
-  color: var(--shiki-dark, var(--shiki-foreground)) !important;
+.dark .shiki span[style*="color:#"] {
+  color: inherit !important;
 }
 
 /* Dashboard Animations */

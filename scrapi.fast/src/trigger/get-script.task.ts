@@ -4,6 +4,9 @@ import puppeteer from "puppeteer-core";
 import { v0 } from "v0-sdk";
 import { enhanceHTMLReadability } from "../lib/enhance-html";
 import { Browserbase } from "@browserbasehq/sdk";
+import { db } from "../db";
+import * as schema from "../db/schema";
+import { eq } from "drizzle-orm";
 
 const logSchema = z.object({
   url: z.string(),
@@ -109,11 +112,11 @@ export const scrapePageLogs = schemaTask({
         return;
       }
 
-      let body: string | object | undefined;
+      let body: string | Record<string, unknown> | undefined;
       try {
         const contentType = response.headers()["content-type"] || "";
         if (contentType.includes("application/json")) {
-          body = await response.json();
+          body = (await response.json()) as Record<string, unknown>;
         } else if (contentType.includes("text/")) {
           body = await response.text();
         }
@@ -122,13 +125,21 @@ export const scrapePageLogs = schemaTask({
       }
 
       if (body) {
+        let processedBody: string | Record<string, unknown>;
+        if (typeof body === "string") {
+          const enhanced = enhanceHTMLReadability(body);
+          processedBody =
+            typeof enhanced === "string" ? enhanced : JSON.stringify(enhanced);
+        } else {
+          processedBody = body;
+        }
         logs.push({
           url: request.url(),
           method: request.method(),
           resourceType,
           status: response.status(),
           headers: response.headers(),
-          body: enhanceHTMLReadability(body as string),
+          body: processedBody,
           timestamp: Date.now(),
         });
       }
@@ -141,6 +152,7 @@ export const scrapePageLogs = schemaTask({
 
     return {
       logs,
+      sessionId: session.id,
     };
   },
 });
@@ -524,8 +536,9 @@ export const getScriptTask = schemaTask({
     inputSchemaString: z.string(),
     outputSchemaString: z.string(),
     testArgsString: z.string(),
+    service_id: z.string(),
   }),
-  run: async (payload) => {
+  run: async (payload, { ctx }) => {
     const scrapeResult = await scrapePageLogs.triggerAndWait({
       url: payload.url,
     });
@@ -556,10 +569,26 @@ export const getScriptTask = schemaTask({
       throw new Error(`Script generation failed: ${errorMsg}`);
     }
 
+    await db
+      .update(schema.Service)
+      .set({
+        script: generateResult.output.script,
+        agent_chat_id: generateResult.output.chatId,
+        browser_session: scrapeResult.output.sessionId,
+        updated_at: new Date().toISOString(),
+      })
+      .where(eq(schema.Service.id, payload.service_id));
+
+    logger.info("Service updated in database", {
+      serviceId: payload.service_id,
+      testPassed: generateResult.output.testPassed,
+    });
+
     return {
       script: generateResult.output.script,
       testPassed: generateResult.output.testPassed,
       chatId: generateResult.output.chatId,
+      serviceId: payload.service_id,
     };
   },
 });

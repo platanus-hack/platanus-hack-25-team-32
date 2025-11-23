@@ -13,6 +13,7 @@ export const Service = pgTable(SERVICE_TABLE, {
 
   name: text("name").notNull(),
   description: text("description"),
+  url: text("url"),
 
   script: text("script").notNull(),
 

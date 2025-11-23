@@ -7,6 +7,8 @@ export const DEPLOYMENT_TABLE = "deployment";
 export const DeploymentStatus = pgEnum("deployment_status_enum", [
   "draft",
   "active",
+  "building",
+  "error",
   "archived",
 ]);
 

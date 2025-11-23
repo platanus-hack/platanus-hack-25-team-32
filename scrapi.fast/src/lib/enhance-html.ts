@@ -1,6 +1,6 @@
 export function enhanceHTMLReadability(
-  htmlString: string | object | undefined,
-): string | object {
+  htmlString: string | Record<string, unknown> | undefined,
+): string | Record<string, unknown> | undefined {
   if (typeof htmlString !== "string") return htmlString;
 
   const maxLineLength = 120;

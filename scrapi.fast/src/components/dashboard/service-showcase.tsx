@@ -64,9 +64,10 @@ export function ServiceShowcase({ serviceId }: ServiceShowcaseProps) {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const isReady = service && !isLoading;
+  // Check if service is ready and has a URL to fetch
+  const isReady = service && !isLoading && service.url;
 
-  // Auto-run when service becomes ready
+  // Auto-run when service becomes ready and has a URL
   useEffect(() => {
     if (isReady && !hasAutoRun && !isRunning) {
       setHasAutoRun(true);

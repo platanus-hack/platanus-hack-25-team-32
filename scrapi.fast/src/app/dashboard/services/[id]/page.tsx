@@ -74,9 +74,9 @@ export default function ServicePage() {
     });
   };
 
-  // Auto-run when service is ready
+  // Auto-run when service is ready and has a URL
   useEffect(() => {
-    if (service && !isLoading && !hasAutoRun && !isRunning) {
+    if (service && !isLoading && service.url && !hasAutoRun && !isRunning) {
       setHasAutoRun(true);
       handleRun();
     }
